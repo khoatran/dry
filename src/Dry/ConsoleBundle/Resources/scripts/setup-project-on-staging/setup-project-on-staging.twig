@@ -1,0 +1,8 @@
+#!/bin/bash
+sudo mkdir /var/www/staging/tmp
+cd /var/www/staging/tmp
+sudo git clone {{ bitbucket_url }}
+cd ..
+sudo mv /var/www/staging/tmp /var/www/staging/{{ project_alias }}
+cd /var/www/staging/{{ project_alias }}
+sudo chown -R www-data:www-data .

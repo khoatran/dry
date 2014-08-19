@@ -14,9 +14,10 @@ class GenScriptCommand extends ContainerAwareCommand
         $this
             ->setName('gen-script')
             ->setDescription('Create the bash script based on a template')
-            ->addArgument('template', InputArgument::REQUIRED, 'Template of bash script file');
+            ->addArgument('template', InputArgument::REQUIRED, 'Template of bash script file')
+            ->addArgument('dataFilePath', InputArgument::OPTIONAL, 'JSON data file - if you don\'t want to input data manually');
 
-        ;
+
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -29,28 +30,61 @@ class GenScriptCommand extends ContainerAwareCommand
             $output->writeln("The template script does not exist");
             return;
         }
+        $fields = $this->getFieldsOfScript($templatePath, $templateAlias);
 
-        $params = $this->askUserForInput($templatePath, $templateAlias, $input, $output);
+        $dataFilePath = $input->getArgument('dataFilePath');
+        if(!empty($dataFilePath)) {
+            $params = $this->parseInputFromDataFilePath($fields, $dataFilePath, $input, $output);
+        } else {
+            $params = $this->askUserForInput($fields, $input, $output);
+        }
+
         $loader = new \Twig_Loader_String();
         $twig = new \Twig_Environment($loader);
         $content = $twig->render($templateContent, $params);
         $outputScriptDir = $this->getContainer()->get('kernel')->getRootDir()."/..";
         $outputScriptFile = $outputScriptDir.'/run-scripts/'.$templateAlias.'.sh';
-        $result = file_put_contents($outputScriptFile, $content);
+        file_put_contents($outputScriptFile, $content);
         $output->writeln("Complete generating script");
     }
 
-    private function askUserForInput($templatePath, $templateAlias, InputInterface $input, OutputInterface $output) {
-        $scriptDataFilePath = $templatePath.'/'.$templateAlias.'/'.$templateAlias.'.json';
+    private function getFieldsOfScript($templatePath, $templateAlias) {
+        $scriptDataFilePath = $templatePath.'/'.$templateAlias.'/config.json';
         $scriptDataContent = file_get_contents($scriptDataFilePath);
         $params = array();
-        if($scriptDataContent !== false) {
-            $dialog = $this->getHelperSet()->get('dialog');
-            $scriptDataJSON = json_decode($scriptDataContent, true);
+        if($scriptDataContent === false) {
+            return $params;
+        }
+        $scriptDataJSON = json_decode($scriptDataContent, true);
+        if(isset($scriptDataJSON["fields"])) {
             $fields = $scriptDataJSON["fields"];
-            foreach($fields as $field) {
-                $fieldName = $field["name"];
-                $title = $field["title"];
+        } else {
+            $fields = array();
+        }
+        return $fields;
+    }
+
+    private function parseInputFromDataFilePath($dataFilePath, InputInterface $input, OutputInterface $output) {
+        $dataContent = file_get_contents($dataFilePath);
+        $params = json_decode($dataContent, true);
+        //TODO need validation + throw exception if data is not followed the constraint of fields.
+        return $params;
+    }
+
+    private function askUserForInput($fields, InputInterface $input, OutputInterface $output) {
+        $params = array();
+        $dialog = $this->getHelperSet()->get('dialog');
+        foreach($fields as $field) {
+            $fieldName = $field["name"];
+            $title = $field["title"];
+            if($field["required"] == "yes") {
+                do {
+                    $params[$fieldName] = $dialog->ask($output, $title.' : ');
+                    if(empty($params[$fieldName])) {
+                        $output->writeln("This field is required. Please input again!");
+                    }
+                } while(empty($params[$fieldName]));
+            } else {
                 $params[$fieldName] = $dialog->ask($output, $title.' : ');
             }
         }
