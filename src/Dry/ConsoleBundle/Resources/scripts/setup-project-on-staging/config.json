@@ -15,6 +15,5 @@
             "name": "deployment_path",
             "required": "yes"
         }
-
     ]
 }
