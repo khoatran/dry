@@ -1,0 +1,4 @@
+dry_console:
+    resource: "@DryConsoleBundle/Resources/config/routing.yml"
+    prefix:   /
+

@@ -1,0 +1,5 @@
+#!/bin/bash
+sudo mkdir {{ deployment_path }}/{{ project_alias }}
+cd {{ deployment_path }}/{{ project_alias }}
+sudo git clone {{ bitbucket_url }}
+sudo chown -R www-data:www-data .

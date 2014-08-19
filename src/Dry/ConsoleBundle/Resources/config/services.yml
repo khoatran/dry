@@ -1,0 +1,7 @@
+parameters:
+#    dry_console.example.class: Dry\ConsoleBundle\Example
+
+services:
+#    dry_console.example:
+#        class: %dry_console.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

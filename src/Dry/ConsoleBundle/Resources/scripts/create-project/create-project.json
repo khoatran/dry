@@ -1,0 +1,23 @@
+{
+    "options": {
+
+    },
+    "fields": [
+        {
+            "title": "Project alias (no space)",
+            "name": "project_alias",
+            "required": "yes"
+        },
+        {
+            "title": "Bitbucket URL",
+            "name": "bitbucket_url",
+            "required": "yes"
+        },
+        {
+            "title": "Deployment path",
+            "name": "deployment_path",
+            "required": "yes"
+        }
+
+    ]
+}
