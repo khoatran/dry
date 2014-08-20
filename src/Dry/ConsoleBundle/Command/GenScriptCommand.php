@@ -1,10 +1,11 @@
 <?php
 
 namespace Dry\ConsoleBundle\Command;
+use Dry\ConsoleBundle\Helper\InputDialogFactory;
+use Dry\ConsoleBundle\Helper\ScriptLoader;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class GenScriptCommand extends ContainerAwareCommand
@@ -23,21 +24,24 @@ class GenScriptCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $templateAlias = $input->getArgument('template');
-        $templatePath = __DIR__. '/../Resources/scripts';
-        $templateFilePath = $templatePath.'/'.$templateAlias.'/'.$templateAlias.'.twig';
-        $templateContent = file_get_contents($templateFilePath);
-        if($templateContent === false) {
-            $output->writeln("The template script does not exist");
+        $scriptLoader = new ScriptLoader();
+        $scriptLoader->load($templateAlias);
+
+
+        if(!$scriptLoader->isSuccess()) {
+            $errors = $scriptLoader->getErrors();
+            foreach($errors as $error) {
+                $output->writeln($error);
+            }
             return;
         }
-        $fields = $this->getFieldsOfScript($templatePath, $templateAlias);
 
-        $dataFilePath = $input->getArgument('dataFilePath');
-        if(!empty($dataFilePath)) {
-            $params = $this->parseInputFromDataFilePath($fields, $dataFilePath, $input, $output);
-        } else {
-            $params = $this->askUserForInput($fields, $input, $output);
-        }
+        $dialog = $this->getHelperSet()->get('dialog');
+        $templateContent = $scriptLoader->getScriptTemplate();
+
+        $consoleInputDialog = InputDialogFactory::getFieldInputDialog($input, $output, $dialog);
+        $fields = $scriptLoader->getFields();
+        $params = $consoleInputDialog->askForInput($fields);
 
         $loader = new \Twig_Loader_String();
         $twig = new \Twig_Environment($loader);
@@ -48,46 +52,4 @@ class GenScriptCommand extends ContainerAwareCommand
         $output->writeln("Complete generating script");
     }
 
-    private function getFieldsOfScript($templatePath, $templateAlias) {
-        $scriptDataFilePath = $templatePath.'/'.$templateAlias.'/config.json';
-        $scriptDataContent = file_get_contents($scriptDataFilePath);
-        $params = array();
-        if($scriptDataContent === false) {
-            return $params;
-        }
-        $scriptDataJSON = json_decode($scriptDataContent, true);
-        if(isset($scriptDataJSON["fields"])) {
-            $fields = $scriptDataJSON["fields"];
-        } else {
-            $fields = array();
-        }
-        return $fields;
-    }
-
-    private function parseInputFromDataFilePath($dataFilePath, InputInterface $input, OutputInterface $output) {
-        $dataContent = file_get_contents($dataFilePath);
-        $params = json_decode($dataContent, true);
-        //TODO need validation + throw exception if data is not followed the constraint of fields.
-        return $params;
-    }
-
-    private function askUserForInput($fields, InputInterface $input, OutputInterface $output) {
-        $params = array();
-        $dialog = $this->getHelperSet()->get('dialog');
-        foreach($fields as $field) {
-            $fieldName = $field["name"];
-            $title = $field["title"];
-            if($field["required"] == "yes") {
-                do {
-                    $params[$fieldName] = $dialog->ask($output, $title.' : ');
-                    if(empty($params[$fieldName])) {
-                        $output->writeln("This field is required. Please input again!");
-                    }
-                } while(empty($params[$fieldName]));
-            } else {
-                $params[$fieldName] = $dialog->ask($output, $title.' : ');
-            }
-        }
-        return $params;
-    }
 }

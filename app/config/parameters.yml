@@ -16,7 +16,7 @@ parameters:
     debug_redirects: false
     use_assetic_controller: true
     #just need to change below params to make it works
-    bb_username: your_bitbucket_username
-    bb_password: your_bitbucket_password
-    bb_repos_account: repos_account_of_the_team_or_company
+    bb_username:
+    bb_password:
+    bb_repos_account:
     bb_default_repos_privacy: private
