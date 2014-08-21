@@ -1,5 +1,6 @@
 #!/bin/bash
-rm -rf run-scripts
+rm -rf scripts/$1/run-box
+mkdir scripts/$1/run-box
 mkdir run-scripts
 php app/console gen-script $1
-sh run-scripts/$1.sh
+sh scripts/$1/run-box/$1.sh

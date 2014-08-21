@@ -1,0 +1,9 @@
+{
+    "fields": [
+        {
+            "title": "Project alias (no space)",
+            "name": "project_alias",
+            "required": "yes"
+        }
+    ]
+}

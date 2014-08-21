@@ -25,21 +25,24 @@ class ScriptLoader {
         return $this->scriptTemplate;
     }
 
-    public function load($templateAlias) {
+    public function load($scriptPath, $templateAlias) {
         $this->isLoadedSuccess = false;
-        $templatePath = __DIR__. '/../Resources/scripts';
-        $templateFilePath = $templatePath.'/'.$templateAlias.'/'.$templateAlias.'.twig';
+
+
+        $templateFilePath = $scriptPath.'/'.$templateAlias.'/'.$templateAlias.'.twig';
+        $scriptConfigFilePath = $scriptPath.'/'.$templateAlias.'/config.json';
+
         $this->scriptTemplate = file_get_contents($templateFilePath);
         if($this->scriptTemplate === false) {
             $this->errors[] = "The template script does not exist";
             return;
         }
-        $this->loadFieldOfScript($templatePath, $templateAlias);
+        $this->loadFieldOfScript($scriptConfigFilePath);
         $this->isLoadedSuccess = true;
     }
 
-    private function loadFieldOfScript($templatePath, $templateAlias) {
-        $scriptConfigFilePath = $templatePath.'/'.$templateAlias.'/config.json';
+    private function loadFieldOfScript($scriptConfigFilePath) {
+
         $scriptConfigContent = file_get_contents($scriptConfigFilePath);
         $scriptConfigJSON = json_decode($scriptConfigContent, true);
         if(isset($scriptConfigJSON["fields"])) {
