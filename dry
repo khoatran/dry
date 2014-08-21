@@ -1,0 +1,12 @@
+#!/bin/bash
+
+PWD=$(pwd)
+
+while [ "$PWD" != '/' ]; do
+        if [ -f "$PWD/konsole" ]; then
+                php "$PWD/konsole" $@
+                exit
+        fi
+        cd ..
+done
+echo 'Konsole file could not be found!'
